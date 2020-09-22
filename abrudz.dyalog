@@ -6,9 +6,10 @@
           0::⎕SIGNAL⊂⎕DMX.(('EN'EN)('Message'Message))
           ⍺←#
           ''≡0/⍺:⍵ ∇⍨⍎⍺ #.⎕NS ⍬
-          args←0,⍨⊆⍵
+          args←⊆⍵
           num←2|⎕DR¨args
           sync←num/args
+          sync,←0/⍨0=≢sync
           path←args/⍨~num
           _←3 ⎕NDELETE tmpDir
           names←1↓∊sync(' ',⍺ _Get)¨path
