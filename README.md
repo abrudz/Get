@@ -12,9 +12,9 @@ Put .dyalog file into user command folder (`⎕SE.SALTUtils.USERDIR,'/MyUCMDs/'`
 `]ULoad Get` or `2⎕FIX'file://path/to/abrudz.dyalog'`
 
 ```apl
-    {namespace} Get <URI> {1}
+    {namespace} Get <URIs> {1}
 ```
-`<URI>` path (relative to current dir) or URL (defaults to http) or workspace name (uses WSPATH)
+`<URIs>` paths (relative to current dir) or URLs (defaults to http) or workspace names (uses WSPATH)
 
 `{1}` write edits done with Editor back to file (only works for local files and directories)
 
@@ -23,11 +23,9 @@ Put .dyalog file into user command folder (`⎕SE.SALTUtils.USERDIR,'/MyUCMDs/'`
 Examples:
 ```apl
     Get 'path/to/file.dyalog'
-    Get 'file://path/to/file.dyalog'
-    Get 'http://site.co/file.dyalog' 1
-    'new' Get 'https://site.co/file.dws'
-    utils Get '/tmp/my-stuff.zip'
-    Get 'github.com/abrudz/aplcart'
+    Get 'file://path/to/file.dyalog' 'http://site.co/file.dyalog' 1
+    'new' Get 'https://site.co/file.dws' '/tmp/my-stuff.zip'
+    utils Get 'github.com/abrudz/aplcart'
     Get 'github.com/abrudz/aplcart/blob/master/Test.aplf'
     Get 'raw.githubusercontent.com/abrudz/aplcart/master/Test.aplf'
 ```
