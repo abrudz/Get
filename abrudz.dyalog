@@ -22,10 +22,10 @@
       r.(Group Name Desc Parse)←'ABrudz' 'Get' 'Import whatever from wherever' '1L -sync'
     ∇
       Help←{
-          ~⍺:List.Desc('    ]',⍵,' <URI> [-sync]')''(']',⍵,' -?? ⍝ for details and examples')
+          ~⍺:List.Desc('    ]',⍵,' <what> [-sync]')''(']',⍵,' -?? ⍝ for details and examples')
           r←2↑0 ∇ ⍵
-          r,←'' '<URI>  path (relative to current dir) or URL (defaults to http) or workspace name (uses WSPATH)'
-          r,←'' '-sync  write edits done with Editor back to file (only for local source files and directories)'
+          r,←'' '<what>  local path (relative to current dir), URI (defaults to http), workspace name (uses WSPATH), SALT name (uses WORKDIR), or user command (uses CMDDIR)'
+          r,←'' '-sync   write edits done with Editor back to file (only for local source files and directories)'
           r,←'' 'Examples:'
           Eg←,/'    ]'⍵' ',⊂
           r,←Eg'"C:\tmp\testme.apln"'
