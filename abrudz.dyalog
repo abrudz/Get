@@ -62,7 +62,7 @@
           path←'^\s+' '\s+$'⎕R''⊢path
           path←'^"(.*)"$' '^''(.*)''$'⎕R'\1'⊢path
      
-          ']'=⊃path:1↓⊃'\.[^"]+'⎕S'&',ns ⎕SE.UCMD'uload ',1↓path ⍝ ucmd
+          ']'=⊃path:sync(ns _LocalFile)⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion box'
           ~∨/'/\'∊path:sync(ns _Bare)path
      
           www←≢'^((https?|ftp)://)?([^.\\/:]+\.)?([^.\\/:]+\.)+[^.\\/:]+/'⎕S 3⊢path
@@ -105,8 +105,8 @@
     L←{0::819⌶⍵ ⋄ ⎕C ⍵}
     Norm←'^\d+|[^\w∆⍙]+'⎕R''
       _Bare←{(sync ns path)←⍺ ⍺⍺ ⍵
-          list←⎕SE.SALT.List path,' -raw'
-          ×≢list:(⊂1 2)⊃list⊣⎕SE.SALT.Load path,' -target=',(⍕ns),' -nolink'/⍨~sync
+          list←⎕SE.SALT.List path,' -raw -full=2'
+          ×≢list:sync(ns _LocalFile)'.dyalog',⍨list⊃⍨⊂1 2
           sync:⎕SIGNAL⊂('EN' 11)('Message' 'Can only sync with local directory or file')
           ns LocalWorkspace path
       }
