@@ -59,10 +59,9 @@
       }
       _Get←{(sync ns path)←⍺ ⍺⍺ ⍵
      
-          path←'^\s+' '\s+$'⎕R''⊢path
-          path←'^"(.*)"$' '^''(.*)''$'⎕R'\1'⊢path
+          path←'^\s+(.*)\s+$' '^"(.*)"$' '^''(.*)''$'⎕R'\1'⍣≡path
      
-          ']'=⊃path:sync(ns _LocalFile)⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion box'
+          ']'=⊃path:sync(ns _LocalFile)⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion ',1↓path
           ~∨/'/\'∊path:sync(ns _Bare)path
      
           www←≢'^((https?|ftp)://)?([^.\\/:]+\.)?([^.\\/:]+\.)+[^.\\/:]+/'⎕S 3⊢path
