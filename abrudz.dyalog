@@ -30,8 +30,6 @@
           Eg←,/'    ]'⍵' ',⊂
           r,←Eg'"C:\tmp\testme.apln"'
           r,←Eg'''file://C:\tmp\Take.aplf'' -sync'
-          r,←Eg'dfns'
-          r,←Eg']box'
           r,←Eg'C:\tmp\linktest'
           r,←Eg'/tmp/myapp -sync'
           r,←Eg'/tmp/ima.zip'
@@ -42,6 +40,9 @@
           r,←Eg'raw.githubusercontent.com/Dyalog/MiServer/master/Config/Logger.xml'
           r,←Eg'ftp://ftp.software.ibm.com/software/test/foo.txt'
           r,←Eg'''"C:\tmp\myarray.apla"'''
+          r,←Eg'HttpCommand'
+          r,←Eg'dfns'
+          r,←Eg']box'
           r,←'' 'Supports directories and the following file types:'
           r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charvec class csv dcfg dws dyalog function interface json json5 operator script tsv xml zip'
           r,←⊂'  (all other file types are assumed to be plain text)'
@@ -62,7 +63,7 @@
           path←'^"(.*)"$' '^''(.*)''$'⎕R'\1'⊢path
      
           ']'=⊃path:1↓⊃'\.[^"]+'⎕S'&',ns ⎕SE.UCMD'uload ',1↓path ⍝ ucmd
-          ~∨/'/\'∊path:ns LocalWorkspace path                 ⍝ ws from wspath
+          ~∨/'/\'∊path:sync(ns _Bare)path
      
           www←≢'^((https?|ftp)://)?([^.\\/:]+\.)?([^.\\/:]+\.)+[^.\\/:]+/'⎕S 3⊢path
           path←'^file://'⎕R''⊢path
@@ -103,7 +104,12 @@
       }
     L←{0::819⌶⍵ ⋄ ⎕C ⍵}
     Norm←'^\d+|[^\w∆⍙]+'⎕R''
-
+      _Bare←{(sync ns path)←⍺ ⍺⍺ ⍵
+          list←⎕SE.SALT.List path,' -raw'
+          ×≢list:(⊂1 2)⊃list⊣⎕SE.SALT.Load path,' -target=',(⍕ns),' -nolink'/⍨~sync
+          sync:⎕SIGNAL⊂('EN' 11)('Message' 'Can only sync with local directory or file')
+          ns LocalWorkspace path
+      }
       LocalWorkspace←{
           (path name ext)←⎕NPARTS ⍵
           name←Norm name
