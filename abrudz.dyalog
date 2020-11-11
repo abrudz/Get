@@ -1,8 +1,15 @@
 :Namespace abrudz
+
+    :Section CONST
     ⎕ML←⎕IO←1
     debug←0
     tmpDir←'/dyalog-get-tmp-dir',⍨739⌶0
     tmpZip←tmpDir,'/dyalog-get-tmp.zip'
+    scriptExts←'(dyalog|apl[fonci]|function|operator|script|class|interface)'
+    syncErr←⊂('EN' 11)('Message' 'Can only sync with local directory or file')
+    :EndSection
+
+    :Section IFACE
       Get←{ ⍝ Function interface
           debug::⎕SIGNAL⊂⎕DMX.(('EN'EN)('Message'Message))
           ⍺←#
@@ -17,10 +24,12 @@
           _←3 ⎕NDELETE tmpDir
           names
       }
+
     ∇ r←List
       r←⎕NS ⍬
       r.(Group Name Desc Parse)←'ABrudz' 'Get' 'Import whatever from wherever' '1L -sync'
     ∇
+
       Help←{
           ~⍺:List.Desc('    ]',⍵,' <what> [-sync]')''(']',⍵,' -?? ⍝ for details and examples')
           r←2↑0 ∇ ⍵
@@ -57,6 +66,24 @@
           ns←##.THIS
           ns Get path params.sync
       }
+    :EndSection
+
+    :Section UTILS
+    L←{0::819⌶⍵ ⋄ ⎕C ⍵}
+    Has←{×≢⍵ ⎕S 3⊢⍺}
+    Norm←'^\d+|[^\w∆⍙]+'⎕R''
+
+      Deserialise←{
+          old←'⎕SE.Link.Deserialise'
+          3=⎕NC old:(⍎old)⍵
+          ⎕SE.Dyalog.Array.Deserialise ⍵
+      }
+      Download←{
+          _←3 ⎕MKDIR tmpDir
+          ''≡3⊃⎕NPARTS ⍵:WebZip ⍵
+          WebFile ⍵
+      }
+
       _Get←{(sync ns path)←⍺ ⍺⍺ ⍵
      
           path←'^\s+(.*)\s+$' '^"(.*)"$' '^''(.*)''$'⎕R'\1'⍣≡path
@@ -64,19 +91,19 @@
           ']'=⊃path:sync(ns _LocalFile)⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion ',1↓path
           ~∨/'/\'∊path:sync(ns _Bare)path
      
-          www←≢'^((https?|ftp)://)?([^.\\/:]+\.)?([^.\\/:]+\.)+[^.\\/:]+/'⎕S 3⊢path
+          www←path Has'^((https?|ftp)://)?([^.\\/:]+\.)?([^.\\/:]+\.)+[^.\\/:]+/'
           path←'^file://'⎕R''⊢path
      
           (dir name ext)←⎕NPARTS path
           ext←L 1↓ext
      
           non←''≡ext
-          aplf←≢'^(dyalog|apl[fonci]|function|operator|script|class|interface)$'⎕S 3⊢ext
+          aplf←ext Has'^',scriptExts,'$'
      
-          sync∧www∨non⍱aplf:⎕SIGNAL⊂('EN' 11)('Message' 'Can only sync with local directory or file')
+          sync∧www∨non⍱aplf:⎕SIGNAL syncErr
           www:0 ∇ Download path
      
-          non:sync(ns _Link)path
+          non:sync(ns _Dir)path
           aplf:sync(ns _LocalFile)path ⍝ normal file
      
           'zip'≡ext:0 ∇ LocalZip path
@@ -89,7 +116,7 @@
           'csv'≡ext:Assign ⎕CSV path
           'tsv'≡ext:Assign ⎕CSV⍠'Separator'(⎕UCS 9)⍠'QuoteChar' ''⊢path
      
-          'apla'≡ext:Assign ⎕SE.Link.Deserialise⊃⎕NGET path 1
+          'apla'≡ext:Assign Deserialise⊃⎕NGET path 1
           'charvec' 'charlist'∊⍨⊂ext:Assign⊃⎕NGET path 1
           'charmat'≡ext:Assign↑⊃⎕NGET path 1
      
@@ -101,19 +128,22 @@
      
           Assign content ⍝ fallback: plain text
       }
-    L←{0::819⌶⍵ ⋄ ⎕C ⍵}
-    Norm←'^\d+|[^\w∆⍙]+'⎕R''
+    :EndSection
+
+    :Section TYPES
       _Bare←{(sync ns path)←⍺ ⍺⍺ ⍵
           list←⎕SE.SALT.List path,' -raw -full=2'
           ×≢list:sync(ns _LocalFile)'.dyalog',⍨list⊃⍨⊂1 2
-          sync:⎕SIGNAL⊂('EN' 11)('Message' 'Can only sync with local directory or file')
+          sync:⎕SIGNAL SyncErr
           ns LocalWorkspace path
       }
+
       LocalWorkspace←{
           (path name ext)←⎕NPARTS ⍵
           name←Norm name
           name⊣(⍎name ⍺.⎕NS ⍬).⎕CY ⍵
       }
+
       _LocalFile←{
           path←1=≡⍵
           nget←⍺<path
@@ -127,6 +157,18 @@
           0::Fix 1
           Fix 2
       }
+
+      _Dir←{
+          ls←⊃⎕NINFO⍠'Recurse' 2⍠1⊢⍵,'/*'
+          scripts←ls Has'\.',scriptExts,'$'
+          scripts:⍺(⍺⍺ _Link)⍵
+     
+          ws←'\.dws$'
+          wss←ls Has ws
+          wss∧⍺:⎕SIGNAL syncErr
+          wss:⍺⍺ LocalWorkspace¨ws ⎕S'%'⊢ls
+      }
+
       _Link←{
           dir←⍵↓⍨-'/\'∊⍨⊃⌽⍵
           (names types)←0 1 ⎕NINFO⍠1⊢dir,'/*'
@@ -139,18 +181,17 @@
           opts.source←'dir'
           name⊣⎕SE.Link.Create ref dir
       }
-      Download←{
-          _←3 ⎕MKDIR tmpDir
-          ''≡3⊃⎕NPARTS ⍵:GitZip ⍵
-          GitFile ⍵
-      }
-      GitFile←{
-          url←'(gitlab.com/[^\\]+/[^\\]+/-/)blob/' 'github.com(/[^/]+/[^/]+)/blob'⎕R'\1raw/' 'raw.githubusercontent.com\1'⊢⍵
+
+      WebFile←{
+          glBlob←'(gitlab.com/[^\\]+/[^\\]+/-/)blob/' ⋄ glRaw←'\1raw/'
+          ghBlob←'github.com(/[^/]+/[^/]+)/blob' ⋄ ghRaw←'raw.githubusercontent.com\1'
+          url←glBlob ghBlob ⎕R glRaw ghRaw⊢⍵
           name←∊1↓⎕NPARTS url
           file←tmpDir,'/',name
           file⊣⎕CMD'curl -L -o ',file,' ',url
       }
-      GitZip←{
+
+      WebZip←{
       ⍝ https://github.com/Dyalog/link/tree/2.0 →
       ⍝ https://github.com/Dyalog/link/archive/2.0.zip
       ⍝ https://github.com/Dyalog/link →
@@ -160,10 +201,34 @@
           dir←tmpDir,'/',2⊃⎕NPARTS ⍵
           dir LocalZip tmpZip
       }
+
       LocalZip←{
           ⍺←tmpDir,'/',2⊃⎕NPARTS ⍵ ⍝ default dir
           _←3 ⎕MKDIR ⍺
           cmd←∊⍵ ⍺,¨⍨⊃('unzip ' ' -d ')('tar -xf ' ' -C ')⌽⍨'Windows'≡7↑⊃# ⎕WG'APLVersion'
           ⍺⊣⎕SH cmd
       }
+    :EndSection
+
+    :Section TESTS
+    ∇ ok←qa;targets;syncs;sync;target;ns
+      targets←('^ +\]',List.Name,' ([^</C].*)')⎕S'\1'⊢1 Help List.Name
+      syncs←¯6(' -sync'≡↑)¨targets
+      targets↓¨⍨←¯6×syncs
+      ok←⍬
+      #.results←0⍴⊂''
+      :For sync target :InEach syncs targets
+          :Trap debug
+              ⎕EX'ns' ⋄ 'ns'⎕NS ⍬
+              #.results,←⊂ns Get target sync
+              ok,←1
+          :Else
+              ⎕←'FAIL: ',(⍕⎕THIS),'.',List.Name,' ',(⎕SE.Dyalog.Utils.repObj target),sync/' 1'
+              ok,←0
+          :EndTrap
+      :EndFor
+      ok←∧/ok
+    ∇
+    :EndSection
+
 :EndNamespace
