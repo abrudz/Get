@@ -20,7 +20,7 @@
           sync,←0∩≢sync
           path←args/⍨~num
           _←3 ⎕NDELETE tmpDir
-          names←1↓∊sync(' ',⍺ _Get)¨path
+          names←Join sync(⍺ _Get)¨path
           _←3 ⎕NDELETE tmpDir
           names
       }
@@ -72,7 +72,8 @@
     :Section UTILS
     L←{0::819⌶⍵ ⋄ ⎕C ⍵}
     Has←{×≢⍵ ⎕S 3⊢⍺}
-    Norm←'^\d+|[^\w∆⍙]+'⎕R''
+    Norm←{'^\d+|[^\w∆⍙]+'⎕R''⊢⍵}
+    Join←{1↓∊' ',¨⍵}
 
       Deserialise←{
           old←'⎕SE.Link.Deserialise'
@@ -98,6 +99,8 @@
           path←':\w+$'⎕R''⊢path
      
           path←ExpEnv path
+     
+          ∨/'*?'∊path:Join sync ∇¨⊃⎕NINFO⍠1⊢path
      
           Encl←1⌽'$^',⊃∘⊆,'(.*)',⊃∘⌽∘⊆
           encls←Encl¨'\s*'('\x{201C}' '\x{201D}')('\x{2018}' '\x{2019}')'[\xAB\xBB]','"''`'
