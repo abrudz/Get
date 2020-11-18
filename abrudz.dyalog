@@ -79,10 +79,17 @@
           3=⎕NC old:(⍎old)⍵
           ⎕SE.Dyalog.Array.Deserialise ⍵
       }
+
       Download←{
           _←3 ⎕MKDIR tmpDir
           ''≡3⊃⎕NPARTS ⍵:WebZip ⍵
           WebFile ⍵
+      }
+
+      ExpEnv←{
+          untilded←'~\+' '~-' '~([^\w]|$)'⎕R'[PWD]' '[OLDPWD]' '[HOME]\1'⍠'UCP' 1⊢⍵
+          bracked←'\$env:([\pL_]\w*)' '\$([\pL_]\w*)' '\$\{([^}]+)}' '\[([^]]+)]' '%([^%]+)%'⎕R'[\1]'⍠'UCP' 1⊢untilded
+          '\[([^]]+)]'⎕R{2 ⎕NQ #'GetEnvironment'(1↓¯1↓⍵.Match)}bracked
       }
 
       _Get←{(sync ns path)←⍺ ⍺⍺ ⍵
@@ -90,8 +97,10 @@
           as←⊃':\w+$'⎕S'&'⊢path
           path←':\w+$'⎕R''⊢path
      
+          path←ExpEnv path
+     
           Encl←1⌽'$^',⊃∘⊆,'(.*)',⊃∘⌽∘⊆
-          encls←Encl¨'\s+'('\x{201C}' '\x{201D}')('\x{2018}' '\x{2019}')'[\xAB\xBB]','"''`'
+          encls←Encl¨'\s*'('\x{201C}' '\x{201D}')('\x{2018}' '\x{2019}')'[\xAB\xBB]','"''`'
           path←encls ⎕R'\1'⍣≡path
      
           ']'=⊃path:sync ∇ as,⍨⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion ',1↓path
