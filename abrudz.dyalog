@@ -31,9 +31,10 @@
     ∇
 
       Help←{
-          ~⍺:List.Desc('    ]',⍵,' <what> [-sync]')''(']',⍵,' -?? ⍝ for details and examples')
+          ~⍺:List.Desc('    ]',⍵,' <what>[:<ext>] [-sync]')''(']',⍵,' -?? ⍝ for details and examples')
           r←2↑0 ∇ ⍵
           r,←'' '<what>  local path (relative to current dir), URI (defaults to http), workspace name (uses WSPATH), SALT name (uses WORKDIR), or user command (uses CMDDIR)'
+          r,←'' ':<ext>  treat <what> as if it had the extension <ext> (d for directory, n for nested vector, s for simple vector, m for matrix)'
           r,←'' '-sync   write edits done with Editor back to file (only for local source files and directories)'
           r,←'' 'Examples:'
           Eg←,/'    ]'⍵' ',⊂
@@ -53,8 +54,8 @@
           r,←Eg'dfns'
           r,←Eg']box'
           r,←'' 'Supports directories and the following file types:'
-          r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charvec class csv dcf dcfg dws dyalog function interface json json5 operator script tsv xml zip'
-          r,←⊂'  (all other file types are assumed to be plain text)'
+          r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charstring charvec class csv dcf dcfg dws dyalog function interface json json5 operator script tsv xml zip'
+          r,←⊂'  (all other file types are imported as character vectors)'
           r,←'' 'Gets appropriate zip/raw file from GitHub and GitLab repository/blob/release/commit URL.'
           r
       }
@@ -86,24 +87,27 @@
 
       _Get←{(sync ns path)←⍺ ⍺⍺ ⍵
      
+          as←⊃':\w+$'⎕S'&'⊢path
+          path←':\w+$'⎕R''⊢path
+     
           Encl←1⌽'$^',⊃∘⊆,'(.*)',⊃∘⌽∘⊆
           encls←Encl¨'\s+'('\x{201C}' '\x{201D}')('\x{2018}' '\x{2019}')'[\xAB\xBB]','"''`'
           path←encls ⎕R'\1'⍣≡path
      
-          ']'=⊃path:sync(ns _LocalFile)⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion ',1↓path
+          ']'=⊃path:sync ∇ as,⍨⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion ',1↓path
           ~∨/'/\'∊path:sync(ns _Bare)path
      
           www←path Has'^((https?|ftp)://)?([^.\\/:]+\.)?([^.\\/:]+\.)+[^.\\/:]+/'
           path←'^file://'⎕R''⊢path
      
           (dir name ext)←⎕NPARTS path
-          ext←L 1↓ext
+          ext←L 1↓as⊣⍣(×≢as)⊢ext
      
-          non←''≡ext
+          non←'dir'(,'d')''∊⍨⊂ext
           aplf←ext Has'^',scriptExts,'$'
      
           sync∧www∨non⍱aplf:⎕SIGNAL syncErr
-          www:0 ∇ Download path
+          www:0 ∇ as,⍨Download path
      
           non:sync(ns _Dir)path
           aplf:sync(ns _LocalFile)path ⍝ normal file
@@ -120,8 +124,8 @@
           'tsv'≡ext:Assign ⎕CSV⍠'Separator'(⎕UCS 9)⍠'QuoteChar' ''⊢path
      
           'apla'≡ext:Assign Deserialise⊃⎕NGET path 1
-          'charvec' 'charlist'∊⍨⊂ext:Assign⊃⎕NGET path 1
-          'charmat'≡ext:Assign↑⊃⎕NGET path 1
+          'charvec' 'charlist' 'vtv' 'nr'(,'n')'nv'∊⍨⊂ext:Assign⊃⎕NGET path 1
+          'charmat' 'mat' 'cr'(,'m')'cm'∊⍨⊂ext:Assign↑⊃⎕NGET path 1
      
           debug::⎕SIGNAL⊂('EN' 11)('Message' 'Unsupported file type')
           content←⊃⎕NGET path
