@@ -53,9 +53,9 @@
           r,←Eg'dfns'
           r,←Eg']box'
           r,←'' 'Supports directories and the following file types:'
-          r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charvec class csv dcfg dws dyalog function interface json json5 operator script tsv xml zip'
+          r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charvec class csv dcf dcfg dws dyalog function interface json json5 operator script tsv xml zip'
           r,←⊂'  (all other file types are assumed to be plain text)'
-          r,←'' 'Gets appropriate zip/raw file from GitHub and GitLab repository/blob URL.'
+          r,←'' 'Gets appropriate zip/raw file from GitHub and GitLab repository/blob/release/commit URL.'
           r
       }
 
@@ -86,7 +86,9 @@
 
       _Get←{(sync ns path)←⍺ ⍺⍺ ⍵
      
-          path←'^\s+(.*)\s+$' '^"(.*)"$' '^''(.*)''$'⎕R'\1'⍣≡path
+          Encl←1⌽'$^',⊃∘⊆,'(.*)',⊃∘⌽∘⊆
+          encls←Encl¨'\s+'('\x{201C}' '\x{201D}')('\x{2018}' '\x{2019}')'[\xAB\xBB]','"''`'
+          path←encls ⎕R'\1'⍣≡path
      
           ']'=⊃path:sync(ns _LocalFile)⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion ',1↓path
           ~∨/'/\'∊path:sync(ns _Bare)path
@@ -113,6 +115,7 @@
           name←Norm name
           Assign←name∘ns.{⍺⊣⍎⍺,'←⍵'}
      
+          'dcf'≡ext:Assign(⎕FUNTIE⊢⊢(⎕FREAD,)¯1+2↓∘⍳/2↑⎕FSIZE)path ⎕FSTIE 0
           'csv'≡ext:Assign ⎕CSV path
           'tsv'≡ext:Assign ⎕CSV⍠'Separator'(⎕UCS 9)⍠'QuoteChar' ''⊢path
      
@@ -196,7 +199,14 @@
       ⍝ https://github.com/Dyalog/link/archive/2.0.zip
       ⍝ https://github.com/Dyalog/link →
       ⍝ https://github.com/Dyalog/link/archive/master.zip
-          url←'/tree/([^/]+)/?$' '/?$'⎕R'/archive/\1.zip' '/archive/master.zip'⊢⍵
+      ⍝ https://github.com/Dyalog/link/commit/67f6b806f121a077e5c2a13c2f8f52c295d1a43b →
+      ⍝ https://github.com/Dyalog/link/archive/67f6b806f121a077e5c2a13c2f8f52c295d1a43b.zip
+      ⍝ https://github.com/Dyalog/ride/releases/tag/v4.3.3453 →
+      ⍝ https://github.com/Dyalog/ride/archive/v4.3.3453.zip
+      ⍝ https://github.com/abrudz/Kbd/releases/latest →
+      ⍝ https://github.com/abrudz/Kbd/releases/tag/v15us
+          ⍵ Has'(git(?:hub|lab).+/)releases/latest/?$':∇⊃'location: (.*)'⎕S'\1'⎕SH'curl -IL ',⍵
+          url←'(git(?:hub|lab).+/)(?:tree|commit|releases/tag)/([^/]+)/?$' '(git(?:hub|lab).+)/?$'⎕R'\1archive/\2.zip' '\1/archive/master.zip'⍠'ML' 1⊢⍵
           _←⎕CMD'curl -L -o ',tmpZip,' ',url
           dir←tmpDir,'/',2⊃⎕NPARTS ⍵
           dir LocalZip tmpZip
