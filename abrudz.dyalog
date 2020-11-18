@@ -88,7 +88,7 @@
       }
 
       ExpEnv←{
-          untilded←'(\W|^)~\+' '(\W|^)~-' '(\W|^)~(^\W|$)'⎕R'\1[PWD]' '\1[OLDPWD]' '\1[HOME]\2'⍠'UCP' 1⊢⍵
+          untilded←'(\W|^)~\+' '(\W|^)~-' '(\W|^)~(\W|$)'⎕R'\1[PWD]' '\1[OLDPWD]' '\1[HOME]\2'⍠'UCP' 1⊢⍵
           bracked←'\$env:([\pL_]\w*)' '\$([\pL_]\w*)' '\$\{([^}]+)}' '\[([^]]+)]' '%([^%]+)%'⎕R'[\1]'⍠'UCP' 1⊢untilded
           '\[([^]]+)]'⎕R{2 ⎕NQ #'GetEnvironment'(1↓¯1↓⍵.Match)}bracked
       }
