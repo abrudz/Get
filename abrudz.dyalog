@@ -103,7 +103,7 @@
           ∨/'*?'∊path:Join sync ∇¨⊃⎕NINFO⍠1⊢path
      
           Encl←1⌽'$^',⊃∘⊆,'(.*)',⊃∘⌽∘⊆
-          encls←Encl¨'\s*'('\x{201C}' '\x{201D}')('\x{2018}' '\x{2019}')'[\xAB\xBB]','"''`'
+          encls←Encl¨'"''`',('\x{201C}' '\x{201D}')'[\xAB\xBB]'('\x{2018}' '\x{2019}')'\s*'
           path←encls ⎕R'\1'⍣≡path
      
           ']'=⊃path:sync ∇ as,⍨⊃'source: +(.*)'⎕S'\1'↓⎕SE.UCMD'uversion ',1↓path
@@ -178,14 +178,18 @@
       }
 
       _Dir←{
-          ls←⊃⎕NINFO⍠'Recurse' 2⍠1⊢⍵,'/*'
-          scripts←ls Has'\.',scriptExts,'$'
+          (names types)←0 1 ⎕NINFO⍠'Recurse' 2⍠1⊢⍵,'/*'
+          files←names/⍨2=types
+     
+          scripts←files Has'\.',scriptExts,'$'
           scripts:⍺(⍺⍺ _Link)⍵
      
           ws←'\.dws$'
-          wss←ls Has ws
+          wss←files Has ws
           wss∧⍺:⎕SIGNAL syncErr
-          wss:⍺⍺ LocalWorkspace¨ws ⎕S'%'⊢ls
+          wss:⍺⍺ LocalWorkspace¨ws ⎕S'%'⊢files
+     
+          Join ⍺(⍺⍺ _Get)¨files
       }
 
       _Link←{
