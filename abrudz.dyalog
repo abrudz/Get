@@ -211,7 +211,7 @@
           url←glBlob ghBlob ⎕R glRaw ghRaw⊢⍵
           name←∊1↓⎕NPARTS url
           file←tmpDir,'/',name
-          file⊣⎕CMD'curl -L -o ',file,' ',url
+          file Curl url
       }
 
       WebZip←{
@@ -227,9 +227,14 @@
       ⍝ https://github.com/abrudz/Kbd/releases/tag/v15us
           ⍵ Has'(git(?:hub|lab).+/)releases/latest/?$':∇⊃'location: (.*)'⎕S'\1'⎕SH'curl -IL ',⍵
           url←'(git(?:hub|lab).+/)(?:tree|commit|releases/tag)/([^/]+)/?$' '(git(?:hub|lab).+)/?$'⎕R'\1archive/\2.zip' '\1/archive/master.zip'⍠'ML' 1⊢⍵
-          _←⎕CMD'curl -L -o ',tmpZip,' ',url
           dir←tmpDir,'/',2⊃⎕NPARTS ⍵
-          dir LocalZip tmpZip
+          dir LocalZip tmpZip Curl url
+      }
+
+      Curl←{
+          _←⎕CMD'curl -L -o ',⍺,' ',⍵
+          'not found'≡L⊃⎕NGET ⍺:⎕SIGNAL⊂('EN' 22)('Message'(⍵,': Not Found'))
+          ⍺
       }
 
       LocalZip←{
