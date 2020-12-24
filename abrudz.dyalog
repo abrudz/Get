@@ -27,7 +27,7 @@
 
     ∇ r←List
       r←⎕NS ⍬
-      r.(Group Name Desc Parse)←'ABrudz' 'Get' 'Import whatever from wherever' '1L -sync'
+      r.(Group Name Desc Parse)←'ABrudz' 'Get' 'Import whatever from wherever' '99S -sync'
     ∇
 
       Help←{
@@ -63,9 +63,9 @@
       Run←{ ⍝ UCMD interface
           debug::⎕DMX.Message ⎕SIGNAL ⎕EN
           params←⊃⌽⍵
-          path←⊃params.Arguments
+          path←params.Arguments
           ns←##.THIS
-          ns Get path params.sync
+          ns Get path,params.sync
       }
     :EndSection
 
