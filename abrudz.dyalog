@@ -1,4 +1,4 @@
-:Namespace abrudz
+﻿:Namespace get
 
     :Section CONST
     ⎕ML←⎕IO←1
@@ -27,7 +27,7 @@
 
     ∇ r←List
       r←⎕NS ⍬
-      r.(Group Name Desc Parse)←'ABrudz' 'Get' 'Import whatever from wherever' '99S -sync'
+      r.(Group Name Desc Parse)←'File' 'Get' 'Import whatever from wherever' '99S -sync'
     ∇
 
       Help←{
@@ -152,12 +152,12 @@
     :Section TYPES
       _Bare←{(sync ns path)←⍺ ⍺⍺ ⍵
           list←⎕SE.SALT.List path,' -raw -full=2'
-          ×≢list:sync(ns _LocalFile)'.dyalog',⍨list⊃⍨⊂1 2
-          sync:⎕SIGNAL SyncErr
+          ×≢list:sync(ns _LocalFile)'.dyalog',⍨list⊃⍨⊂1 2 
+          sync∧⎕NEXISTS path:⎕SIGNAL syncErr
           ns LocalWorkspace path
       }
 
-      LocalWorkspace←{
+      LocalWorkspace←{     
           (path name ext)←⎕NPARTS ⍵
           name←Norm name
           name⊣(⍎name ⍺.⎕NS ⍬).⎕CY ⍵
