@@ -3,6 +3,7 @@
 
     :Section CONST ─────
     debug←0 ⋄ ⎕ML←1 ⋄ ⎕IO←1
+    desc←'Import data/code in many formats from local or remote sources'
 
     :namespace tmp
         dir←'/dyalog-get-tmp-dir',⍨739⌶0
@@ -52,9 +53,11 @@
     :Section IFACE ─────
       Get←{ ⍝ Function interface
           debug::error.Resignal ⍬
-          ⍺←#
+          dyad←×⎕NC'⍺'
+          ⍺←⊃⎕XSI
           ''≡0/⍺:⍵ ∇⍨⍎⍺ #.⎕NS ⍬ ⍝ ns name → ref
           3≤|≡⍵:Join ⍺ ∇¨⍵
+     
           args←⊆⍵
           num←2|⎕DR¨args
           sync←num/args
@@ -64,44 +67,25 @@
           _←cleanup
           names←Join sync(⍺ _Get)¨path
           _←cleanup
-          names
+     
+          target←dyad/'.',⍨,⍕⍺
+          Join target∘,¨' '(≠⊆⊢)names
       }
 
     ∇ r←List
       r←⎕NS ⍬
-      r.(Group Name Desc Parse)←'File' 'Get' 'Import whatever from wherever' '99S -sync'
+      r.(Group Name Desc Parse)←'File' 'Get'desc'99S -sync -target='
     ∇
 
       Help←{
-          ~⍺:List.Desc('    ]',⍵,' <what>[:<ext>] [-sync]')''(']',⍵,' -?? ⍝ for details and examples')
-          r←2↑0 ∇ ⍵
-          r,←'' '<what>  local path (relative to current dir), URI (defaults to http), workspace name (uses WSPATH), SALT name (uses WORKDIR), or user command (uses CMDDIR)'
-          r,←'' ':<ext>  treat <what> as if it had the extension <ext> (d for directory, n for nested vector, s for simple vector, m for matrix)'
-          r,←'' '-sync   write edits done with Editor back to file (only for local source files and directories)'
-          r,←'' 'Examples:'
-          Eg←,/'    ]'⍵' ',⊂
-          r,←Eg'"C:\tmp\testme.apln"'
-          r,←Eg'''file://C:\tmp\Take.aplf'' -sync'
-          r,←Eg'C:\tmp\linktest'
-          r,←Eg'/tmp/myapp -sync'
-          r,←Eg'/tmp/ima.zip'
-          r,←Eg'github.com/mkromberg/apldemo/blob/master/Units.csv'
-          r,←Eg'github.com/Dyalog/Jarvis/blob/master/Distribution/Jarvis.dws'
-          r,←Eg'http://github.com/json5/json5/blob/master/test/test.json5'
-          r,←Eg'http://github.com/json5/json5/blob/master/test/test.json5:v'
-          r,←Eg'https://github.com/abrudz/Kbd'
-          r,←Eg'raw.githubusercontent.com/Dyalog/MiServer/master/Config/Logger.xml'
-          r,←Eg'ftp://ftp.software.ibm.com/software/test/foo.txt'
-          r,←Eg'''"C:\tmp\myarray.apla"'''
-          r,←Eg'HttpCommand'
-          r,←Eg'dfns'
-          r,←Eg']box'
-          r,←Eg']box:vtv'
-          r,←'' 'Supports directories and the following file types:'
-          r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charstring charvec class csv dcf dcfg dws dyalog function interface json json5 operator script tsv xml zip'
-          r,←⊂'  (all other file types are imported as character vectors)'
-          r,←'' 'Gets appropriate zip/raw file from GitHub and GitLab repository/blob/release/commit URL.'
-          r
+          0=⍺:(⊂desc),Syntax ⍵
+          r←0 ∇ ⍵
+          b←3↑r
+          a←2↓r
+          a/⍨←~@(1+⍺)⊢1⍨¨a
+          Fmt←{b,⍵,a}
+          1=⍺:Fmt Details ⍵
+          2=⍺:Fmt Examples ⍵
       }
 
       Run←{ ⍝ UCMD interface
@@ -118,31 +102,86 @@
           debug::error.Old ⎕TKILL thread
           params←⊃⌽⍵
           path←params.Arguments
-          ns←##.THIS
+          ns←⍎∘params.target⍣(0≢params.target)⊢##.THIS
           (⎕TKILL thread)⊢ns Get path,params.sync
       }
     :EndSection
 
+    :Section UHELP ─────
+      Syntax←{
+          r←,⊂'    ]',⍵,' <what>[:<ext>] [-target=<ns>] [-sync]'
+          r,←⊂''
+          r,←⊂']',⍵,' -??   ⍝ for details'
+          r,←⊂']',⍵,' -???  ⍝ for examples'
+          r
+      }
+      Details←{
+          r←,⊂'<what>    local path (relative to current dir), URI (defaults to http), workspace name (uses WSPATH), SALT name (uses WORKDIR), or user command (uses CMDDIR)'
+          r,←⊂''
+          r,←⊂':<ext>    treat <what> as if it had the extension <ext> (d for directory, n for nested vector, s for simple vector, m for matrix)'
+          r,←⊂''
+          r,←⊂'-target=  put imported things into <ns> (default is current namespace)'
+          r,←⊂''
+          r,←⊂'-sync     write edits done with Editor back to file (only for local source files and directories)'
+          r,←⊂''
+          r,←⊂']',⍵,' supports importing directories and the following file extensions (files with any other extensions are imported as character vectors):'
+          r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charstring charvec class csv dcf dcfg dws dyalog function interface js json json5 operator script tsv xml zip'
+          r,←⊂''
+          r,←⊂'Notes:'
+          r,←⊂' ∘  GitHub repository/blob/release/commit URLs are automatically expanded to get the appropriate zip file (which is then extracted and imported) or source file.'
+          r,←⊂' ∘  Supported formats like JSON, CSV, and XML, are converted to APL arrays based on file extensions.'
+          r,←⊂' ∘  You can direct ]',⍵,' to act on a file as if it had a different extension by appending a colon (:) followed by the normal extension, e.g. myfile.txt:json'
+          r
+      }
+      Examples←{
+          r←,⊂'Examples:'
+          Eg←,/'    ]'⍵' ',⊂
+          r,←Eg'"C:\tmp\testme.apln"'
+          r,←Eg'''file://C:\tmp\Take.aplf'' -sync'
+          r,←Eg'C:\tmp\linktest'
+          r,←Eg'/tmp/myapp -sync'
+          r,←Eg'/tmp/ima.zip'
+          r,←Eg'github.com/mkromberg/apldemo/blob/master/Units.csv'
+          r,←Eg'github.com/Dyalog/Jarvis/blob/master/Distribution/Jarvis.dws'
+          r,←Eg'http://github.com/json5/json5/blob/master/test/test.json5'
+          r,←Eg'http://github.com/json5/json5/blob/master/test/test.json5:v'
+          r,←Eg'https://github.com/abrudz/Kbd'
+          r,←Eg'raw.githubusercontent.com/Dyalog/MiServer/master/Config/Logger.xml'
+          r,←Eg'ftp://ftp.software.ibm.com/software/test/foo.txt'
+          r,←Eg'''"C:\tmp\myarray.apla"'''
+          r,←Eg'HttpCommand -target=⎕SE'
+          r,←Eg'dfns'
+          r,←Eg']box'
+          r,←Eg']box:vtv'
+          r
+      }
+    :endsection
+
     :Section TESTS ─────
-    ∇ ok←qa;targets;syncs;sync;target;ns
-      targets←('^ +\]',List.Name,' ([^</C].*)')⎕S'\1'⊢1 Help List.Name
-      syncs←¯6(' -sync'≡↑)¨targets
-      targets↓¨⍨←¯6×syncs
+    ∇ ok←qa;targets;syncs;sync;target;ns;whats;what;call
       ok←⍬
-      #.results←0⍴⊂''
-      :For sync target :InEach syncs targets
+      3 ⎕MKDIR'/tmp/myapp'
+      'foo←{⍵ ⍵ ⍵}'⎕NPUT'/tmp/myapp/foo.aplf' 1
+      :For call :In 1↓Examples List.Name
+          :If ∨/'ima.zip'⍷call
+              :Continue
+          :EndIf
           :If debug
-              ⎕←sync target
+              ⎕←call
           :EndIf
           :Trap debug
               ⎕EX'ns' ⋄ 'ns'⎕NS ⍬
-              #.results,←⊂ns Get target sync
+              ⎕CS ns
+              {}⎕SE.UCMD call
+              ⎕CS ##
               ok,←1
           :Else
-              ⎕←'FAIL: ',(⍕⎕THIS),'.',List.Name,' ',(⎕SE.Dyalog.Utils.repObj target),sync/' 1'
+              ⎕CS ##
+              ⎕←'*** FAIL: ',call
               ok,←0
           :EndTrap
       :EndFor
+      3 ⎕NDELETE'/tmp/myapp'
       ok←∧/ok
     ∇
     :EndSection
@@ -346,7 +385,7 @@
      
           content←⊃⎕NGET path
      
-          'dcfg' 'json'∊⍨⊂4↑ext:Assign 0 ⎕JSON⍠'Dialect' 'JSON5'⊢content
+          'dcfg' 'js' 'json' 'json5'∊⍨⊂4↑ext:Assign 0 ⎕JSON⍠'Dialect' 'JSON5'⊢content
           'xml'≡ext:Assign ⎕XML content
      
           Assign content ⍝ fallback: plain text
