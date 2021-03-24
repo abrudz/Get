@@ -1,9 +1,9 @@
-﻿:Namespace get ⍝ 1.0
-⍝ 2021 03 22 Adam: Port from github.com/abrudz/get
+﻿:Namespace get ⍝ 1.01
+⍝ 2021 03 24 Adam: Port from github.com/abrudz/get
 
     :Section CONST ─────
     debug←0 ⋄ ⎕ML←1 ⋄ ⎕IO←1
-    desc←'Import data/code in many formats from local or remote sources'
+    desc←'Fetch data/code in many formats from local or remote sources'
 
     :namespace tmp
         dir←'/dyalog-get-tmp-dir',⍨739⌶0
@@ -74,7 +74,7 @@
 
     ∇ r←List
       r←⎕NS ⍬
-      r.(Group Name Desc Parse)←'File' 'Get'desc'99S -sync -target='
+      r.(Group Name Desc Parse)←'DevOps' 'Get'desc'99S -sync -target='
     ∇
 
       Help←{
@@ -109,28 +109,30 @@
 
     :Section UHELP ─────
       Syntax←{
-          r←,⊂'    ]',⍵,' <what>[:<ext>] [-target=<ns>] [-sync]'
+          r←,⊂'    ]',⍵,' <source>[:<ext>] [-target=<ns>] [-sync]'
           r,←⊂''
           r,←⊂']',⍵,' -??   ⍝ for details'
           r,←⊂']',⍵,' -???  ⍝ for examples'
           r
       }
       Details←{
-          r←,⊂'<what>    local path (relative to current dir), URI (defaults to http), workspace name (uses WSPATH), SALT name (uses WORKDIR), or user command (uses CMDDIR)'
+          r←,⊂'<source>  local path (relative to current dir), URI (defaults to http), workspace name (uses WSPATH), SALT name (uses WORKDIR), or user command (uses CMDDIR)'
           r,←⊂''
-          r,←⊂':<ext>    treat <what> as if it had the extension <ext> (d for directory, n for nested vector, s for simple vector, m for matrix)'
+          r,←⊂':<ext>    treat <source> as if it had the extension <ext> (d for directory, n for nested vector, s for simple vector, m for matrix)'
           r,←⊂''
           r,←⊂'-target=  put imported things into <ns> (default is current namespace)'
           r,←⊂''
-          r,←⊂'-sync     write edits done with Editor back to file (only for local source files and directories)'
+          r,←⊂'-sync     attempt to establish synchronisation between <source> and <ns> (only for local source files and directories)'
+          r,←⊂''
+          r,←⊂']',⍵,' is a development tool intended as a one-stop utility for quickly getting bringing resources into the workspace while programming. Do not use at run time, as exact results may vary. Instead, use precisely documented features like ⎕JSON, ⎕CSV, ⎕XML, and ⎕FIX in combination with loading tools like ⎕NGET, HttpCommand, ⎕SE.Link.Import, etc.'
           r,←⊂''
           r,←⊂']',⍵,' supports importing directories and the following file extensions (files with any other extensions are imported as character vectors):'
           r,←⊂'  apla aplc aplf apli apln aplo charlist charmat charstring charvec class csv dcf dcfg dws dyalog function interface js json json5 operator script tsv xml zip'
           r,←⊂''
           r,←⊂'Notes:'
-          r,←⊂' ∘  GitHub repository/blob/release/commit URLs are automatically expanded to get the appropriate zip file (which is then extracted and imported) or source file.'
+          r,←⊂' ∘  GitHub repository/blob/release/commit URLs are parsed to determine the appropriate zip file (which is then extracted and imported) or source file.'
           r,←⊂' ∘  Supported formats like JSON, CSV, and XML, are converted to APL arrays based on file extensions.'
-          r,←⊂' ∘  You can direct ]',⍵,' to act on a file as if it had a different extension by appending a colon (:) followed by the normal extension, e.g. myfile.txt:json'
+          r,←⊂' ∘  You can direct ]',⍵,' to act on a file as if it had a different extension by appending a colon (:) followed by the normal extension, for example myfile.txt:json'
           r
       }
       Examples←{
